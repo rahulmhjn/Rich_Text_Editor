@@ -2,24 +2,42 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Editor, EditorState, RichUtils } from "draft-js";
 import "draft-js/dist/Draft.css";
-import App from "./App";
-import KatexScreen from "./KatexScreen";
+// import App from "./App";
 
-import { Fraction, toTex } from "algebra.js";
-import { Node, Context } from "react-mathjax2";
+import createKaTeXPlugin from "draft-js-katex-plugin";
+import katex from "katex";
+// import ConfiguredEditor from "./stories/ConfiguredEditor";
 
-function Formula(props) {
-  return (
-    <Context input="tex">
-      <Node inline>{props.tex}</Node>
-    </Context>
-  );
+const katexTheme = {
+  insertButton: "Button Button-small Button-insert",
+};
+
+function configuredEditor() {
+  const kaTeXPlugin = createKaTeXPlugin({
+    // the configs here are mainly to show you that it is possible. Feel free to use w/o config
+    doneContent: { valid: "Close", invalid: "Invalid syntax" },
+    katex, // <-- required
+    MathInput: null,
+    removeContent: "Remove",
+    theme: katexTheme,
+    translator: null,
+  });
+
+  const plugins = [kaTeXPlugin];
+
+  const baseEditorProps = Object.assign({
+    plugins,
+  });
+
+  return { baseEditorProps, InsertButton: kaTeXPlugin.InsertButton };
 }
 
 const MyEditor = () => {
   const [editorState, setEditorState] = React.useState(() =>
     EditorState.createEmpty()
   );
+
+  const { baseEditorProps, InsertButton } = configuredEditor();
 
   const _onBoldClick = () => {
     setEditorState(RichUtils.toggleInlineStyle(editorState, "BOLD"));
@@ -36,20 +54,13 @@ const MyEditor = () => {
     return "not-handled";
   };
 
-  const a = new Fraction(1, 5);
-  const b = new Fraction(2, 7);
-  const answer = a.multiply(b);
-
-  const question = (
-    <Formula tex={`${toTex(a)} × ${toTex(b)} = ${toTex(answer)}`} />
-  );
-
   return (
     <div>
       <button onClick={_onBoldClick}>Bold</button>
-      {question}
-      <KatexScreen />
+      <InsertButton />
+      <InsertButton initialValue="int(s-x)^3">Insert ascii math</InsertButton>
       <Editor
+        plugins={baseEditorProps.plugins}
         editorState={editorState}
         handleKeyCommand={handleKeyCommand}
         onChange={setEditorState}
